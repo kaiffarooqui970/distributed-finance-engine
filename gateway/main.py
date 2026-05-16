@@ -1,29 +1,35 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS  # Import the new tool
 import requests
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app) # Allows our React frontend on port 3000 to talk to this gateway safely
 
-# The internal URLs of your other containers
-AUTH_SERVICE_URL = "http://auth_service:8000"
-FINANCE_SERVICE_URL = "http://finance_service:8080"
+# Clean internal URLs using the correct Docker network names
+AUTH_SERVICE_URL = "http://auth-service:8000"
+FINANCE_SERVICE_URL = "http://finance_backend:8080" # Using the clean container name!
 
 @app.route('/')
 def home():
     return jsonify({"message": "Gateway Server is Active"})
 
-# This route forwards login requests to the Auth Service
+# 1. Forward Login Requests to Django Auth Service
 @app.route('/login', methods=['POST'])
-def proxy_auth():
-    resp = requests.post(f"{AUTH_SERVICE_URL}/login/", json=request.get_json())
-    return (resp.text, resp.status_code, resp.headers.items())
+def proxy_login():
+    try:
+        resp = requests.post(f"{AUTH_SERVICE_URL}/login/", json=request.get_json())
+        return (resp.text, resp.status_code, resp.headers.items())
+    except Exception as e:
+        return jsonify({"error": f"Gateway failed to reach Auth Service: {str(e)}"}), 500
 
-# This route forwards calculation requests to the C++ Finance Service
-@app.route('/calculate', methods=['POST']) 
+# 2. Forward Calculation Requests to C++ Finance Service
+@app.route('/calculate', methods=['POST'])
 def proxy_finance():
-    resp = requests.post(f"{FINANCE_SERVICE_URL}/calculate-retirement", json=request.get_json())
-    return (resp.text, resp.status_code, resp.headers.items())
+    try:
+        resp = requests.post(f"{FINANCE_SERVICE_URL}/calculate-retirement", json=request.get_json())
+        return (resp.text, resp.status_code, resp.headers.items())
+    except Exception as e:
+        return jsonify({"error": f"Gateway failed to reach Finance Service: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)

@@ -1,19 +1,18 @@
-# Use the official GCC image to get a full C++ environment
-FROM gcc:latest
+FROM ubuntu:22.04
+
+# Install the C++ compiler and download tools
+RUN apt-get update && apt-get install -y g++ make wget
 
 WORKDIR /app
 
-# Install the networking library (Asio) that Crow relies on
-RUN apt-get update && apt-get install -y libasio-dev wget
-
-# Download the official Crow framework header file
+# Download the official standalone Crow framework
 RUN wget https://github.com/CrowCpp/Crow/releases/download/v1.0+5/crow_all.h
 
-# Copy your C++ source code into the container
-COPY main.cpp .
+# Copy your main.cpp into the container
+COPY . .
 
-# Compile the code into an executable named 'finance_engine'
-RUN g++ -O3 main.cpp -lpthread -o finance_engine
+# Compile your code with threading enabled (required by Crow)
+RUN g++ -O3 main.cpp -o finance_engine -pthread
 
-# The command to run when the container starts
+# Start the server!
 CMD ["./finance_engine"]

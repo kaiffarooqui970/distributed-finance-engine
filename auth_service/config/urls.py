@@ -1,6 +1,8 @@
+from django.contrib import admin
 from django.urls import path
-from .views import CustomAuthToken
+from users.views import CustomAuthToken
 
 urlpatterns = [
-    path('login/', CustomAuthToken.as_view(), name='api_login'),
+    path('admin/', admin.site.urls),
+    path('login/', CustomAuthToken.as_view()),
 ]

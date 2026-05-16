@@ -12,9 +12,11 @@ services:
       - ./db_data:/var/lib/mysql
 
   # Backend Server I - Python (Authentication)
-  auth_service:
+  auth-service:
     build: ./auth_service
     container_name: auth_backend
+    ports:
+      - "8001:8000"
     depends_on:
       - db
     volumes:
@@ -24,23 +26,24 @@ services:
   finance_service:
     build: ./finance_service
     container_name: finance_backend
+    ports:
+      - "8002:8080"
     depends_on:
       - db
 
-  # Gateway Server - Python/Django
+  # Gateway Server - Python/Flask
   gateway:
     build: ./gateway
     container_name: gateway_server
     ports:
       - "8000:8000"
     depends_on:
-      - auth_service
+      - auth-service
       - finance_service
     volumes:
       - ./gateway:/app
 
-  
-  # Frontend Server
+  # Frontend Server - React
   frontend:
     build: ./frontend
     container_name: frontend_web
